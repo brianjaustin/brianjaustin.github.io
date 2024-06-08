@@ -5,8 +5,22 @@ const pluginNavigation = require("@11ty/eleventy-navigation");
 const pluginRss = require("@11ty/eleventy-plugin-rss");
 const { EleventyHtmlBasePlugin } = require("@11ty/eleventy");
 
+const pluginImages = require("./eleventy.config.images.js");
+
 /** @param {import('@11ty/eleventy').UserConfig} eleventyConfig */
 module.exports = (eleventyConfig) => {
+	// Copy the contents of the `public` folder to the output folder
+	// For example, `./public/css/` ends up in `_site/css/`
+	eleventyConfig.addPassthroughCopy({
+		"./public/": "/",
+	});
+
+	// Watch content images for the image pipeline.
+	eleventyConfig.addWatchTarget("content/**/*.{svg,webp,png,jpeg}");
+
+	// App plugins
+	eleventyConfig.addPlugin(pluginImages);
+
 	// Official 11ty plugins
 	eleventyConfig.addPlugin(pluginBundle);
 	eleventyConfig.addPlugin(pluginNavigation);
