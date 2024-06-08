@@ -1,0 +1,26 @@
+{
+	"name": "brianjaustin.github.io",
+	"version": "1.0.0",
+	"description": "Blog/website for Brian Austin",
+	"main": "index.js",
+	"scripts": {
+		"build": "pnpm eleventy",
+		"check": "pnpm prettier . --check && pnpm eslint .",
+		"format": "pnpm prettier . --write",
+		"start": "pnpm eleventy --serve --quiet"
+	},
+	"author": "Brian Austin",
+	"license": "AGPL-3.0-or-later",
+	"devDependencies": {
+		"@11ty/eleventy": "^2.0.1",
+		"@11ty/eleventy-navigation": "^0.3.5",
+		"@11ty/eleventy-plugin-bundle": "^1.0.4",
+		"@11ty/eleventy-plugin-rss": "^1.2.0",
+		"@eslint/js": "^9.4.0",
+		"eslint": "^9.4.0",
+		"eslint-config-prettier": "^9.1.0",
+		"globals": "^15.4.0",
+		"luxon": "^3.4.4",
+		"prettier": "^3.3.1"
+	}
+}
