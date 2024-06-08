@@ -1,19 +1,19 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
+	push:
+		branches:
+			- main
 	pull_request:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+	contents: read
+	pages: write
+	id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+	group: "pages"
+	cancel-in-progress: false
 
 jobs:
 	check:
@@ -21,15 +21,15 @@ jobs:
 		steps:
 			- uses: actions/checkout@v4
 
-			- name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+	- name: Setup Node
+		uses: actions/setup-node@v4
+		with:
+			node-version: "22"
 
-			- uses: pnpm/action-setup@v4
+	- uses: pnpm/action-setup@v4
 
-			- run: pnpm install
-			- run: pnpm check
+	- run: pnpm install
+	- run: pnpm check
 
 	deploy:
 		needs: check
@@ -37,27 +37,27 @@ jobs:
 		steps:
 			- uses: actions/checkout@v4
 
-			- name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+		- name: Setup Node
+			uses: actions/setup-node@v4
+			with:
+				node-version: "22"
 
-			- uses: pnpm/action-setup@v4
+		- uses: pnpm/action-setup@v4
 
-			- name: Persist Eleventy .cache
-        uses: actions/cache@v4
-        with:
-          path: ./.cache
-          key: ${{ runner.os }}-eleventy-fetch-cache
+	- name: Persist Eleventy .cache
+	uses: actions/cache@v4
+	with:
+	path: ./.cache
+	key: ${{ runner.os }}-eleventy-fetch-cache
 
-			- name: Install dependencies and build
-				run: |
-					pnpm install
-					pnpm build
+	- name: Install dependencies and build
+	run: |
+	pnpm install
+	pnpm build
 
-			- name: Deploy
-				uses: actions/deploy-pages@v4
-				if: github.ref == 'refs/heads/main'
-				with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+	- name: Deploy
+	uses: actions/deploy-pages@v4
+	if: github.ref == 'refs/heads/main'
+	with:
+	github_token: ${{ secrets.GITHUB_TOKEN }}
+	publish_dir: ./_site
