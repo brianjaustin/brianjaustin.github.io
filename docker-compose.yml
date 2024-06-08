@@ -1,0 +1,8 @@
+services:
+  blog:
+    build:
+      context: .
+    volumes:
+      - .:/src
+    ports:
+      - 8080:8080
