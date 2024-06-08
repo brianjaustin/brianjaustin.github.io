@@ -113,7 +113,7 @@ Centraal:
 {% image "./utrecht_centraal_fietsenstalling3.jpg", "" %}
 
 More information about the bicycle parking garage at Utrecht Centraal:
-https://youtu.be/ETixg39_W_E?si=Wy3ILy7qjApakE3N.
+[https://youtu.be/ETixg39_W_E?si=Wy3ILy7qjApakE3N](https://youtu.be/ETixg39_W_E?si=Wy3ILy7qjApakE3N).
 
 ## Closing
 
