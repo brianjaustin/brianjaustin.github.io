@@ -30,7 +30,7 @@ jobs:
       - run: pnpm install
       - run: pnpm check
 
-  deploy:
+  build:
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -51,9 +51,16 @@ jobs:
         run: |
           pnpm install
           pnpm build
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy
         uses: actions/deploy-pages@v4
         if: github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site
+        environment:
+          name: github-pages
+          url: ${{ steps.deployment.outputs.page_url }}
