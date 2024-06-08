@@ -13,6 +13,8 @@
 		{#- Let people know that the site is generated with 11ty #}
 		<meta name="generator" content="{{ eleventy.generator }}">
 
+		{%- css %}{% include "public/css/index.css" %}{% endcss %}
+
 		<style>{% getBundle "css" %}</style>
 	</head>
 	<body>
