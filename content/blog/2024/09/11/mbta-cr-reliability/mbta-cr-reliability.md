@@ -1274,7 +1274,17 @@ Either way, I think the the Commuter Rail could do better.
 		}
 	};
 
-	Chart.defaults.color = "white";
+	let options = {};
+	if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		Chart.defaults.color = "white";
+		options = {
+			legend: {
+				labels: {
+					fontColor: "white",
+				},
+			},
+		};
+	}
 
 	const container = document.getElementById("graphsContainer");
   for (const [line, data] of Object.entries(lineData)) {
@@ -1285,13 +1295,7 @@ Either way, I think the the Commuter Rail could do better.
 				labels: dates,
 				datasets: [data]
 			},
-			options: {
-				legend: {
-					labels: {
-						fontColor: "white"
-					}
-				}
-			}
+			options,
 		});
 		container.append(ctx);
 		container.append(document.createElement("hr"));
