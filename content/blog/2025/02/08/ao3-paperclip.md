@@ -70,35 +70,8 @@ of them, which is well into silly numbers and makes running some queries Scary.
 
 At the time, I was following a guide (I no longer remember where) that suggested a script like this
 to move everything over
-```rb
-  desc "Migrate pseud icons to ActiveStorage paths"
-  task(migrate_pseud_icons: :environment) do
-	require "open-uri"
 
-	return unless Rails.env.staging? || Rails.env.production?
-
-	Pseud.where.not(icon_file_name: nil).find_each do |pseud|
-  	image = pseud.icon_file_name
-  	ext = File.extname(image)
-  	image_original = "original#{ext}"
-
-  	icon_url = if Rails.env.production?
-               	"https://s3.amazonaws.com/otw-ao3-icons/icons/#{pseud.id}/#{image_original}"
-             	else
-               	"https://s3.amazonaws.com/otw-ao3-icons/staging/icons/#{pseud.id}/#{image_original}"
-             	end
-  	begin
-    	pseud.icon.attach(io: URI.parse(icon_url).open,
-                      	filename: image_original,
-                      	content_type: pseud.icon_content_type)
-  	rescue StandardError => e
-    	puts "Error '#{e}' copying #{icon_url}"
-  	end
-
-  	puts "Finished up to ID #{pseud.id}" if pseud.id.modulo(100).zero?
-	end
-end
-```
+<script src="https://gist.github.com/brianjaustin/aba4eaffa07e312bc6100b6f0c121ce6.js"></script>
 
 You might already see a few problems with that. Sadly for us, we initially did not.
 Just a few minutes after starting that script, we saw CPU usage on our three primary database
@@ -126,64 +99,10 @@ possible out of the database. I re-wrote the script entirely to
 1. Create an `ActiveStorage::Blob` and `ActiveStorage::Attachment` by hand, then upload the file
 manually to the new S3 bucket after the database work was done.
 
-Here's what that looks like:
-```ruby
-  desc "Migrate pseud icons to ActiveStorage paths"
-  task(migrate_pseud_icons: :environment) do
-    require "aws-sdk-s3"
-    require "open-uri"
+Here's what that looks like (the checksum calculation is copied directly from the ActiveStorage's
+impementation):
 
-    return unless Rails.env.staging? || Rails.env.production?
-
-    bucket_name = ENV["S3_BUCKET"]
-    prefix = Rails.env.production? ? "icons/" : "staging/icons/"
-    s3 = Aws::S3::Resource.new(
-      region: ENV["S3_REGION"],
-      access_key_id: ENV["S3_ACCESS_KEY_ID"],
-      secret_access_key: ENV["S3_SECRET_ACCESS_KEY"]
-    )
-    old_bucket = s3.bucket(bucket_name)
-    new_bucket = s3.bucket(ENV["TARGET_BUCKET"])
-
-    Pseud.no_touching do
-      old_bucket.objects(prefix: prefix).each do |object|
-        # Path example: staging/icons/108621/original.png
-        path_parts = object.key.split("/")
-        next unless path_parts[-1]&.include?("original")
-        next if ActiveStorage::Attachment.where(record_type: "Pseud", record_id: path_parts[-2]).any?
-
-        pseud_id = path_parts[-2]
-        old_icon = URI.open("https://s3.amazonaws.com/#{bucket_name}/#{object.key}")
-        checksum = OpenSSL::Digest.new("MD5").tap do |result|
-          while (chunk = old_icon.read(5.megabytes))
-            result << chunk
-          end
-          old_icon.rewind
-        end.base64digest
-
-        key = nil
-        ActiveRecord::Base.transaction do
-          blob = ActiveStorage::Blob.create_before_direct_upload!(
-            filename: path_parts[-1],
-            byte_size: old_icon.size,
-            checksum: checksum,
-            content_type: Marcel::MimeType.for(old_icon)
-          )
-          key = blob.key
-          blob.attachments.create(
-            name: "icon",
-            record_type: "Pseud",
-            record_id: pseud_id
-          )
-        end
-
-        new_bucket.put_object(key: key, body: old_icon, acl: "bucket-owner-full-control")
-        puts "Finished pseud #{pseud_id}"
-        $stdout.flush
-      end
-    end
-  end
-```
+<script src="https://gist.github.com/brianjaustin/d74eda0dcfd07d80bf26a475529179c1.js"></script>
 
 Later, I also added an environment variable to control which prefixes in S3 were scanned,
 so we could do batches in parallel. That took us down to under a week to copy over 6 million icons.
@@ -201,6 +120,11 @@ but that resulted in 500 errors due to some icons being attached but not in S3 (
 of how the final copy sript worked), so we went back to using the proxy endpoint which still throws
 errors but not in a way that totally breaks certain pages.
 
+[james_](https://github.com/zz9pzza), our tech lead on the Systems side and member of AD&T, also
+added some code to separate ActiveStorage proxy endpoint requests from other requests in HAProxy,
+and force a timeout of 5 seconds to avoid accidentally starving everything else when loading from
+S3 takes awhile.
+
 ## Conclusion
 
 I'm glad we have this checked off our list so we can focus on other time-sensitive projects
@@ -209,6 +133,13 @@ and not facing stability issues, I would not recommend doing this migration. It 
 trouble for our -- fairly small -- SRE team, and so far the only big benefit has been caching
 requests to S3 (which we were paying for each time before). If you do try this migration for yourself,
 good luck and godspeed.
+
+PRs from this process:
+* [https://github.com/otwcode/otwarchive/pull/4807](https://github.com/otwcode/otwarchive/pull/4807)
+* [https://github.com/otwcode/otwarchive/pull/5009](https://github.com/otwcode/otwarchive/pull/5009)
+* [https://github.com/otwcode/otwarchive/pull/5015](https://github.com/otwcode/otwarchive/pull/5015)
+* [https://github.com/otwcode/otwarchive/pull/5018](https://github.com/otwcode/otwarchive/pull/5018)
+* [https://github.com/otwcode/otwarchive/pull/5028](https://github.com/otwcode/otwarchive/pull/5028)
 
 _The programmers at AO3 can be contacted via otw-coders@transformativeworks.org, and our team of
 SREs at systems@transformativeworks.org._
