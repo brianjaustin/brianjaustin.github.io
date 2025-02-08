@@ -6,12 +6,13 @@ date: 2025-02-08
 _Disclaimer: although I am a senior software development volunteer at Archive of Our Own (AO3), any opinions are solely my own and not reflective of AO3, the Organization for Transformative works, or my employer._
 
 AO3 currently has three places where users can upload images:
+
 1. Collection icons, as demonstrated by
-[https://archiveofourown.org/collections/yuletide](https://archiveofourown.org/collections/yuletide)
+   [https://archiveofourown.org/collections/yuletide](https://archiveofourown.org/collections/yuletide)
 1. Pseudonym (pseud) icons, which are linked to users (the icon for the default
-pseud is also a user’s avatar on AO3)
+   pseud is also a user’s avatar on AO3)
 1. Skin (theme) previews, as demonstrated by the
-[official Reversi skin](https://archiveofourown.org/skins/929)
+   [official Reversi skin](https://archiveofourown.org/skins/929)
 
 Until recently, AO3 used a library called [paperclip](https://github.com/thoughtbot/paperclip)
 to store these; sadly, it was
@@ -25,10 +26,11 @@ to migrate to ActiveStorage.
 
 Additionally, we had a couple problems that required moving attachments anyways, regardless of
 whether we kept using kt-paperclip or migrated to ActiveStorage
-* Collection icons and skin previews were stored in the same S3 path in production and staging,
-so changing the attachment in one environment would change the other as well… yikes!
-* The Systems committee (of which I am also a member) wanted to shift our storage location,
-and S3 bucket, from a legacy shared account to environment- and project-specific AWS accounts.
+
+- Collection icons and skin previews were stored in the same S3 path in production and staging,
+  so changing the attachment in one environment would change the other as well… yikes!
+- The Systems committee (of which I am also a member) wanted to shift our storage location,
+  and S3 bucket, from a legacy shared account to environment- and project-specific AWS accounts.
 
 ## The code changes
 
@@ -49,7 +51,7 @@ AO3 uses CloudFlare for DDoS protection and caching. Another benefit we wanted f
 was using CloudFlare to cache images, helping us reduce our AWS bill for S3. The initial code
 [configured rails_storage_proxy](https://github.com/otwcode/otwarchive/pull/4807/commits/0662741a06a430c2673da63cd368744b7713c5d0),
 but we also needed to [change how icon URLs were generated](https://github.com/otwcode/otwarchive/pull/5009/files).
-The latter _is_ documented  for redirect mode, although I think
+The latter _is_ documented for redirect mode, although I think
 [the docs](https://guides.rubyonrails.org/active_storage_overview.html#proxy-mode) could do better
 indicating that this is required for proxy mode as well.
 
@@ -57,11 +59,12 @@ indicating that this is required for proxy mode as well.
 
 Once the code was ready, we had a slightly more complicated deploy process than normal. To avoid
 adverse user experiences, we planned to
+
 1. Deploy the code to a single server that did not get user traffic
 1. Run scripts to copy all images to their new homes
 1. Deploy the code to all the servers
 1. Re-run the scripts to catch any images uploaded after the copy finished but before the new code
-was deployed
+   was deployed
 
 That went fine in our staging environment, and was relatively OK for collection and pseud icons in
 production as well (although I suspect some performance issues we observed around that time were
@@ -95,9 +98,10 @@ That feels suspiciously like downloading a file while in an open database transa
 We tried a couple more versions of the copy script to adress the two issues above, and got a little
 bit further (not much) before the database fell over again. At this point, I decided to get everything
 possible out of the database. I re-wrote the script entirely to
+
 1. Iterate over icons in our original S3 bucket, rather than rows in the `pseuds` table
 1. Create an `ActiveStorage::Blob` and `ActiveStorage::Attachment` by hand, then upload the file
-manually to the new S3 bucket after the database work was done.
+   manually to the new S3 bucket after the database work was done.
 
 Here's what that looks like (the checksum calculation is copied directly from the ActiveStorage's
 impementation):
@@ -120,7 +124,7 @@ but that resulted in 500 errors due to some icons being attached but not in S3 (
 of how the final copy sript worked), so we went back to using the proxy endpoint which still throws
 errors but not in a way that totally breaks certain pages.
 
-[james_](https://github.com/zz9pzza), our tech lead on the Systems side and member of AD&T, also
+[james\_](https://github.com/zz9pzza), our tech lead on the Systems side and member of AD&T, also
 added some code to separate ActiveStorage proxy endpoint requests from other requests in HAProxy,
 and force a timeout of 5 seconds to avoid accidentally starving everything else when loading from
 S3 takes awhile.
@@ -135,11 +139,12 @@ requests to S3 (which we were paying for each time before). If you do try this m
 good luck and godspeed.
 
 PRs from this process:
-* [https://github.com/otwcode/otwarchive/pull/4807](https://github.com/otwcode/otwarchive/pull/4807)
-* [https://github.com/otwcode/otwarchive/pull/5009](https://github.com/otwcode/otwarchive/pull/5009)
-* [https://github.com/otwcode/otwarchive/pull/5015](https://github.com/otwcode/otwarchive/pull/5015)
-* [https://github.com/otwcode/otwarchive/pull/5018](https://github.com/otwcode/otwarchive/pull/5018)
-* [https://github.com/otwcode/otwarchive/pull/5028](https://github.com/otwcode/otwarchive/pull/5028)
+
+- [https://github.com/otwcode/otwarchive/pull/4807](https://github.com/otwcode/otwarchive/pull/4807)
+- [https://github.com/otwcode/otwarchive/pull/5009](https://github.com/otwcode/otwarchive/pull/5009)
+- [https://github.com/otwcode/otwarchive/pull/5015](https://github.com/otwcode/otwarchive/pull/5015)
+- [https://github.com/otwcode/otwarchive/pull/5018](https://github.com/otwcode/otwarchive/pull/5018)
+- [https://github.com/otwcode/otwarchive/pull/5028](https://github.com/otwcode/otwarchive/pull/5028)
 
 _The programmers at AO3 can be contacted via otw-coders@transformativeworks.org, and our team of
 SREs at systems@transformativeworks.org._
