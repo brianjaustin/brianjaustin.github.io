@@ -41,8 +41,8 @@ because they were connected to existing questionable queries.
 
 AO3 also resizes icons for display, which ActiveStorage
 [handles this using libvips](https://guides.rubyonrails.org/active_storage_overview.html#requirements).
-Supporting this required installing libvips everywhere we run the code – test pipelines, Dockerfile,
-and staging/production servers. That package is available from Debian’s default apt repositories
+Supporting this required installing libvips everywhere we run the code -- test pipelines, Dockerfile,
+and staging/production servers. That package is available from Debian's default apt repositories
 though, so not much extra effort.
 
 ### A caching side-note
@@ -51,9 +51,7 @@ AO3 uses CloudFlare for DDoS protection and caching. Another benefit we wanted f
 was using CloudFlare to cache images, helping us reduce our AWS bill for S3. The initial code
 [configured rails_storage_proxy](https://github.com/otwcode/otwarchive/pull/4807/commits/0662741a06a430c2673da63cd368744b7713c5d0),
 but we also needed to [change how icon URLs were generated](https://github.com/otwcode/otwarchive/pull/5009/files).
-The latter _is_ documented for redirect mode, although I think
-[the docs](https://guides.rubyonrails.org/active_storage_overview.html#proxy-mode) could do better
-indicating that this is required for proxy mode as well.
+(You can also use the `url_for` helper, which I found after re-reading the ActiveStorage docs.)
 
 ## Copying icons
 
