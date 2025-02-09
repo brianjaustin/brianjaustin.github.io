@@ -40,7 +40,7 @@ so there is more risk of N+1 queries. Many of those we resolved, but a few we ha
 because they were connected to existing questionable queries.
 
 AO3 also resizes icons for display, which ActiveStorage
-[handles this using vips](https://guides.rubyonrails.org/active_storage_overview.html#requirements).
+[handles this using libvips](https://guides.rubyonrails.org/active_storage_overview.html#requirements).
 Supporting this required installing libvips everywhere we run the code – test pipelines, Dockerfile,
 and staging/production servers. That package is available from Debian’s default apt repositories
 though, so not much extra effort.
@@ -66,7 +66,7 @@ adverse user experiences, we planned to
 1. Re-run the scripts to catch any images uploaded after the copy finished but before the new code
    was deployed
 
-That went fine in our staging environment, and was relatively OK for collection and pseud icons in
+That went fine in our staging environment, and was relatively OK for collection and skin icons in
 production as well (although I suspect some performance issues we observed around that time were
 related to running those copy scripts). Pseuds on production were another story: we have over 8 million
 of them, which is well into silly numbers and makes running some queries Scary.
@@ -103,10 +103,13 @@ possible out of the database. I re-wrote the script entirely to
 1. Create an `ActiveStorage::Blob` and `ActiveStorage::Attachment` by hand, then upload the file
    manually to the new S3 bucket after the database work was done.
 
-Here's what that looks like (the checksum calculation is copied directly from the ActiveStorage's
-impementation):
+Here's what that looks like:
 
 <script src="https://gist.github.com/brianjaustin/d74eda0dcfd07d80bf26a475529179c1.js"></script>
+
+(As noted in the comments, the blob and attachment are created in the database before the file
+actually exists in S3. That caused us some problems later, but using the proxy endpoint limits
+the impact on user experience.)
 
 Later, I also added an environment variable to control which prefixes in S3 were scanned,
 so we could do batches in parallel. That took us down to under a week to copy over 6 million icons.
@@ -121,7 +124,7 @@ for now, but we do need DB stability) and things were mostly happy again.
 
 We also tried turning off the proxy endpoint for a bit due to suspected database connection leaks,
 but that resulted in 500 errors due to some icons being attached but not in S3 (a consequence
-of how the final copy sript worked), so we went back to using the proxy endpoint which still throws
+of how the final copy script worked), so we went back to using the proxy endpoint which still throws
 errors but not in a way that totally breaks certain pages.
 
 [james\_](https://github.com/zz9pzza), our tech lead on the Systems side and member of AD&T, also
