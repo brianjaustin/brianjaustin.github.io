@@ -86,14 +86,14 @@ Oh no. We stopped the script and started looking for why it was hammering the da
 
 The first thing we noticed was that the code above will touch records' `updated_at` timestamp
 when an icon is attached, even though there is no user-facing change. Weird for users,
-and not ideal adding an extra write to the database (partiularly in a table as big as `pseuds`).
+and not ideal adding an extra write to the database (particularly in a table as big as `pseuds`).
 That can be turned off easily enough by wrapping it with
 [`Pseud.no_touching`](https://api.rubyonrails.org/classes/ActiveRecord/NoTouching/ClassMethods.html).
 
 The second suspicious thing is the call to download the original icon, `URI.parse(icon_url)`.
 That feels suspiciously like downloading a file while in an open database transaction: not good.
 
-We tried a couple more versions of the copy script to adress the two issues above, and got a little
+We tried a couple more versions of the copy script to address the two issues above, and got a little
 bit further (not much) before the database fell over again. At this point, I decided to get everything
 possible out of the database. I re-wrote the script entirely to
 
