@@ -6,8 +6,9 @@ date: 2025-02-08
 _Disclaimer: although I am a senior software development volunteer at Archive of Our Own (AO3), any opinions are solely my own and not reflective of AO3, the Organization for Transformative works, or my employer._
 
 **Edit 12 February 2024**: There is now a version of this published to AO3 itself:
-https://archiveofourown.org/works/63010555. You can comment there, but please be aware that code
-snippets on that version do not have syntax highlighting.
+[https://archiveofourown.org/works/63010555](https://archiveofourown.org/works/63010555).
+You can comment there, but please be aware that code snippets on that version do not have syntax
+highlighting.
 
 AO3 currently has three places where users can upload images:
 
